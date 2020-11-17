@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 const productSchema = new mongoose.Schema({
   name: {
     type: String,
+    unique: true,
     required: [true, "Please include the product name"],
   },
   price: {
