@@ -3,12 +3,14 @@ import express from "express"
 import mongoose from "mongoose"
 import bodyParser from "body-parser"
 import morgan from "morgan"
+import routes from "./routeHandler"
 
 const app = express();
 const mongoURI = process.env.mongoURI || 'mongodb+srv://nyaks:N4aN3OuA6sy0IYP7@stock-manager-bha5c.mongodb.net/test?retryWrites=true&w=majority'
 
 app.use(morgan('dev'));
 app.use(bodyParser.json())
+app.use('/uploads' ,express.static('uploads'));
 
 const connect = mongoose.connect(mongoURI,
     {
@@ -22,6 +24,8 @@ app.get('/', (req, res) => {
         message: 'Sema  kimeumana sir!'
     });
 });
+
+routes(app);
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
