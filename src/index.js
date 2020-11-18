@@ -4,6 +4,8 @@ import mongoose from "mongoose";
 import bodyParser from "body-parser";
 import morgan from "morgan";
 
+require('dotenv').config()
+
 import routes from "./routeHandler";
 
 const app = express();

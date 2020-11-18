@@ -4,8 +4,7 @@ import Product from "./models";
 
 const products = async () => {
   const products = await Product.find()
-  const sortedProducts = products.sort((a, b) => a.price.localeCompare(b.price));
-  return sortedProducts;
+  return products;
 };
 
 const getProductById = async (id) => {

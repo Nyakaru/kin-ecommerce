@@ -2,29 +2,29 @@
 import Cart from "./models";
 import { carts, addItem } from "./db";
 import { getProductById } from "../products/db";
-import { getUser } from "../middleware/auth"
+import { getUser } from "../middleware/auth";
 
 const addItemToCart = async (req, res) => {
-  const {  email } = getUser(req)
+  const { email } = getUser(req);
   const { productId } = req.body;
   const quantity = Number.parseInt(req.body.quantity);
   try {
     let cart = await carts();
     let productDetails = await getProductById(productId);
     if (!productDetails) {
-      return res.status(500).json({
+      return res.status(400).json({
         type: "Not Found",
         msg: "Invalid request",
       });
     }
-    //If cart exists 
-    if (cart) {
-      // Check if index exists 
+    //If cart exists
+    if (cart && cart?.items[0]?.email.includes(email)) {
+      // Check if index exists
       const indexFound = cart.items.findIndex(
         (item) => item.productId.id == productId
       );
-      //This removes an item from the the cart if the quantity is set to zero, We can use this method to remove an item from the list  
-      if (indexFound !== 1 && quantity <= 0) {
+      //This removes an item from the the cart if the quantity is set to zero, We can use this method to remove an item from the list
+      if (indexFound !== -1 && quantity <= 0 && cart.items.find((item) => item?.productId?._id == productId)) {
         cart.items.splice(indexFound, 1);
         if (cart.items.length == 0) {
           cart.subTotal = 0;
@@ -35,14 +35,31 @@ const addItemToCart = async (req, res) => {
         }
       }
       //Check if product exist, just add the previous quantity with the new quantity and update the total price
-      else if (indexFound !== 1 && cart?.items[0]?.email.includes(email)) {
-        cart.items[indexFound].quantity = cart.items[indexFound].quantity + quantity;
-        cart.items[indexFound].total = cart.items[indexFound].quantity * productDetails.price;
-        cart.items[indexFound].price = productDetails.price;
-        cart.items[indexFound].email = email;
-        cart.subTotal = cart.items.map((item) => item.total).reduce((acc, next) => acc + next);
+      else if (indexFound !== -1) {
+        if (cart.items.find((item) => item?.productId?._id == productId)) {
+          cart.items[indexFound].quantity =
+            cart.items[indexFound].quantity + quantity;
+          cart.items[indexFound].total =
+            cart.items[indexFound].quantity * productDetails.price;
+          cart.items[indexFound].price = productDetails.price;
+          cart.items[indexFound].email = email;
+          cart.subTotal = cart.items
+            .map((item) => item.total)
+            .reduce((acc, next) => acc + next);
+        } else {
+          cart.items.push({
+            productId: productId,
+            quantity: quantity,
+            email: email,
+            price: productDetails.price,
+            total: parseInt(productDetails.price * quantity),
+          });
+          cart.subTotal = cart.items
+            .map((item) => item.total)
+            .reduce((acc, next) => acc + next);
+        }
       }
-      //Check if quantity is greater than 0 then add item to items array 
+      //Check if quantity is greater than 0 then add item to items array
       else if (quantity > 0) {
         cart.items.push({
           productId: productId,
@@ -55,7 +72,7 @@ const addItemToCart = async (req, res) => {
           .map((item) => item.total)
           .reduce((acc, next) => acc + next);
       }
-      //If quantity of price is 0 throw the error 
+      //If quantity of price is 0 throw the error
       else {
         return res.status(400).json({
           type: "Invalid",
@@ -84,7 +101,6 @@ const addItemToCart = async (req, res) => {
         subTotal: parseInt(productDetails.price * quantity),
       };
       cart = await addItem(cartData);
-      // let data = await cart.save();
       res.json(cart);
     }
   } catch (err) {
@@ -98,7 +114,7 @@ const addItemToCart = async (req, res) => {
 };
 
 const getCart = async (req, res) => {
-  const {  email } = getUser(req)
+  const { email } = getUser(req);
   try {
     let cart = await carts();
     if (!cart || !cart?.items[0]?.email.includes(email)) {
@@ -122,7 +138,7 @@ const getCart = async (req, res) => {
 };
 
 const emptyCart = async (req, res) => {
-  const {  email } = getUser(req)
+  const { email } = getUser(req);
   try {
     let cart = await carts();
     if (!cart || !cart?.items[0]?.email.includes(email)) {

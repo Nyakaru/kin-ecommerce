@@ -18,8 +18,9 @@
     "nodemon": "^2.0.6"
   },
   "scripts": {
-    "start": "nodemon --exec babel-node src/index.js",
+    "dev": "nodemon --exec babel-node src/index.js",
     "build": "babel src --out-dir dist",
+    "start": "babel-node src/index.js",
     "serve": "node dist/server.js"
   },
   "devDependencies": {

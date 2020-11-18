@@ -34,7 +34,7 @@ API that enlists ecommerce items and handles purchase details.
   ```
 - Start the application by running
   ```
-  yarn start
+  yarn dev
   ```
 - The application should now be running on the `port 5000`
 - Navigate to postman to test the APIs out on `http://localhost:5000`
