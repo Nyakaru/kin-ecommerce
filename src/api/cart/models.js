@@ -19,6 +19,10 @@ let ItemSchema = new mongoose.Schema({
     total: {
         type: Number,
         required: true,
+    },
+    email: {
+        type: String,
+        required: true,
     }
 }, {
     timestamps: true

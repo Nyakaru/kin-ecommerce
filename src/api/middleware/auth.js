@@ -29,4 +29,15 @@ const checkAuth = (req, res, next) => {
     }
   };
 
-export { createToken, checkAuth };
+/**
+ * @param {{ headers: { authorization: string; }; }} req
+ */
+const getUser = (req) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    return jwt.verify(token, SECRET_KEY)
+  } catch (error) {
+    console.log({ error: error})
+  }
+}
+export { createToken, checkAuth, getUser };

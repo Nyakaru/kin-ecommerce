@@ -2,8 +2,10 @@
 import Cart from "./models";
 import { carts, addItem } from "./db";
 import { getProductById } from "../products/db";
+import { getUser } from "../middleware/auth"
 
 const addItemToCart = async (req, res) => {
+  const {  email } = getUser(req)
   const { productId } = req.body;
   const quantity = Number.parseInt(req.body.quantity);
   try {
@@ -33,21 +35,19 @@ const addItemToCart = async (req, res) => {
         }
       }
       //Check if product exist, just add the previous quantity with the new quantity and update the total price
-      else if (indexFound !== 1) {
-        cart.items[indexFound].quantity =
-          cart.items[indexFound].quantity + quantity;
-        cart.items[indexFound].total =
-          cart.items[indexFound].quantity * productDetails.price;
+      else if (indexFound !== 1 && cart?.items[0]?.email.includes(email)) {
+        cart.items[indexFound].quantity = cart.items[indexFound].quantity + quantity;
+        cart.items[indexFound].total = cart.items[indexFound].quantity * productDetails.price;
         cart.items[indexFound].price = productDetails.price;
-        cart.subTotal = cart.items
-          .map((item) => item.total)
-          .reduce((acc, next) => acc + next);
+        cart.items[indexFound].email = email;
+        cart.subTotal = cart.items.map((item) => item.total).reduce((acc, next) => acc + next);
       }
       //Check if quantity is greater than 0 then add item to items array 
       else if (quantity > 0) {
         cart.items.push({
           productId: productId,
           quantity: quantity,
+          email: email,
           price: productDetails.price,
           total: parseInt(productDetails.price * quantity),
         });
@@ -77,6 +77,7 @@ const addItemToCart = async (req, res) => {
             productId: productId,
             quantity: quantity,
             total: parseInt(productDetails.price * quantity),
+            email: email,
             price: productDetails.price,
           },
         ],
@@ -97,9 +98,10 @@ const addItemToCart = async (req, res) => {
 };
 
 const getCart = async (req, res) => {
+  const {  email } = getUser(req)
   try {
     let cart = await carts();
-    if (!cart) {
+    if (!cart || !cart?.items[0]?.email.includes(email)) {
       return res.status(400).json({
         type: "Invalid",
         msg: "Cart not found",
@@ -120,8 +122,15 @@ const getCart = async (req, res) => {
 };
 
 const emptyCart = async (req, res) => {
+  const {  email } = getUser(req)
   try {
     let cart = await carts();
+    if (!cart || !cart?.items[0]?.email.includes(email)) {
+      return res.status(400).json({
+        type: "Invalid",
+        msg: "Cart not found",
+      });
+    }
     cart.items = [];
     cart.subTotal = 0;
     const data = await Cart.findByIdAndRemove(cart._id);
